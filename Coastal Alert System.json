@@ -1,0 +1,210 @@
+{
+  "name": "Coastal Alert System",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "3102419f-c1fc-4011-b54e-b4953db31906",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e659acc8-5611-44c3-a911-a9d43706afd5",
+              "name": "City",
+              "value": "Mumbai",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "800963ea-0416-4697-8002-9ad91f320c79",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "cityName": "={{ $json.City }}",
+        "language": "en"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "0254427b-3410-44c2-a091-a85d74f3580e",
+      "name": "OpenWeatherMap",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "cRc0fC3Bj7Jjf33b",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Put the parameter below in a single \"query\" field. Ensure it is a string.\n\nweather_description:{{ $json.weather[0].description }}\ntemp:{{ $json.main.temp }}\npressure:{{ $json.main.pressure }}\nhumidity:{{ $json.main.humidity }}\nsea_level:{{ $json.main.sea_level }}\ngrnd_level:{{ $json.main.grnd_level }}\nvisibility:{{ $json.visibility }}\nwind_speed:{{ $json.wind.speed }}\nwind_deg:{{ $json.wind.deg }}\nwind_gust:{{ $json.wind.gust }}\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        816,
+        0
+      ],
+      "id": "3b767906-df43-41bc-9f72-f3cbe001fa21",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qVA3omrBxsiFHzN5",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Analyze this this data and predict if any tsunami, cyclone can hit it, reply only on the format given below and nothing:\nTsunami: probability (in number)\nCyclone: probability (in number)\nRise in Sea level: No rise, decline, low rise, risky",
+              "role": "model"
+            },
+            {
+              "content": "={{ $json.content.parts[0].text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "42dca951-c4d4-45c2-a789-c25a74383244",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qVA3omrBxsiFHzN5",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendChatAction"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "d98b10aa-f594-472f-8000-073bc19af6ba",
+      "name": "Send a chat action",
+      "webhookId": "858e1672-ddcd-4718-a311-019b16b0be3f"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "OpenWeatherMap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenWeatherMap": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Send a chat action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5dc072bb-d6f9-485b-a419-33969d63042e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e68818f3bbfc86da018f6e5ebe5a17db43a43bc0161af2dd1c9e48e68789a184"
+  },
+  "id": "GdwdHbOJ9jZjOnfR",
+  "tags": []
+}
