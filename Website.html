@@ -1,148 +1,262 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Coastal Alert — Dashboard</title>
-  <style>
-    :root{--bg:#0f1724;--card:#111827;--muted:#9ca3af;--accent:#06b6d4;color-scheme:dark}
-    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
-    body{background:linear-gradient(180deg,#071029 0%, #041226 100%);display:flex;align-items:center;justify-content:center;padding:24px}
-    .card{width:100%;max-width:720px;background:var(--card);border-radius:12px;padding:20px;box-shadow:0 6px 30px rgba(2,6,23,.6);color:#e6eef6}
-    h1{margin:0 0 6px;font-size:20px}
-    p.lead{margin:0 0 18px;color:var(--muted)}
-    .row{display:flex;gap:10px;align-items:center}
-    input[type=text]{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:transparent;color:inherit}
-    button{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:#052025;font-weight:600;cursor:pointer}
-    button.secondary{background:transparent;border:1px solid rgba(255,255,255,.06);color:var(--muted)}
-    .result{margin-top:18px;padding:14px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
-    .line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.02)}
-    .line:last-child{border-bottom:none}
-    .muted{color:var(--muted);font-size:13px}
-    .foot{margin-top:16px;color:var(--muted);font-size:13px}
-    .status{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:600}
-    .ok{background:rgba(34,197,94,.12);color:#8ef3b1}
-    .warn{background:rgba(250,204,21,.09);color:#ffeaa7}
-    .danger{background:rgba(239,68,68,.09);color:#ffb3b3}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coastal Alert System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-warning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes pulse-danger {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-warning { animation: pulse-warning 2s infinite; }
+        .pulse-danger { animation: pulse-danger 1.5s infinite; }
+    </style>
 </head>
-<body>
-  <div class="card">
-    <h1>Coastal Alert — Live</h1>
-    <p class="lead">Small single-file UI to call your n8n webhook and display Gemini predictions for tsunami, cyclone and sea-level rise.</p>
+<body class="bg-gradient-to-br from-blue-900 via-blue-800 to-teal-700 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">🌊 Coastal Alert System</h1>
+            <p class="text-blue-100 text-lg">Real-time monitoring of 28 coastal areas</p>
+            <div class="mt-4 text-sm text-blue-200">
+                Last updated: <span id="lastUpdate" class="font-semibold"></span>
+            </div>
+        </div>
 
-    <div class="row">
-      <input id="city" type="text" placeholder="Enter city (e.g. Mumbai)" value="Mumbai" />
-      <button id="fetchBtn">Get Alert</button>
-      <button id="autoBtn" class="secondary">Auto: Off</button>
+        <!-- Alert Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-green-500 rounded-lg p-4 text-center text-white">
+                <div class="text-2xl font-bold" id="safeCount">0</div>
+                <div class="text-sm">Safe Areas</div>
+            </div>
+            <div class="bg-yellow-500 rounded-lg p-4 text-center text-white">
+                <div class="text-2xl font-bold" id="cautionCount">0</div>
+                <div class="text-sm">Caution Areas</div>
+            </div>
+            <div class="bg-orange-500 rounded-lg p-4 text-center text-white">
+                <div class="text-2xl font-bold" id="warningCount">0</div>
+                <div class="text-sm">Warning Areas</div>
+            </div>
+            <div class="bg-red-500 rounded-lg p-4 text-center text-white">
+                <div class="text-2xl font-bold" id="dangerCount">0</div>
+                <div class="text-sm">Danger Areas</div>
+            </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex flex-wrap justify-center gap-2 mb-6">
+            <button onclick="filterAreas('all')" class="filter-btn bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors active">All Areas</button>
+            <button onclick="filterAreas('safe')" class="filter-btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">Safe</button>
+            <button onclick="filterAreas('caution')" class="filter-btn bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors">Caution</button>
+            <button onclick="filterAreas('warning')" class="filter-btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors">Warning</button>
+            <button onclick="filterAreas('danger')" class="filter-btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">Danger</button>
+        </div>
+
+        <!-- Coastal Areas Grid -->
+        <div id="coastalGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Areas will be populated by JavaScript -->
+        </div>
+
+        <!-- Refresh Button -->
+        <div class="text-center mb-6">
+            <button onclick="refreshFromSheets()" class="bg-white text-blue-800 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+                🔄 Refresh Data
+            </button>
+        </div>
+
+        <!-- Connection Status -->
+        <div id="connectionStatus" class="hidden mb-4 p-3 rounded-lg"></div>
     </div>
 
-    <div class="result" id="result">
-      <div class="muted">No data yet — click <strong>Get Alert</strong> or enable auto-refresh.</div>
-    </div>
+    <script>
+        let coastalAreas = [];
 
-    <div class="foot">⚠️ Replace <code>WEBHOOK_URL</code> in the code with your n8n webhook URL (or public endpoint). If your workflow uses a Manual Trigger, replace it with a Webhook trigger that accepts a POST with JSON: <code>{"City":"Mumbai"}</code>.</div>
-  </div>
+        function getStatusConfig(status) {
+            const configs = {
+                safe: { 
+                    color: 'bg-green-500', 
+                    icon: '✅', 
+                    text: 'Safe',
+                    description: 'Normal conditions'
+                },
+                caution: { 
+                    color: 'bg-yellow-500', 
+                    icon: '⚠️', 
+                    text: 'Caution',
+                    description: 'Monitor conditions'
+                },
+                warning: { 
+                    color: 'bg-orange-500 pulse-warning', 
+                    icon: '🚨', 
+                    text: 'Warning',
+                    description: 'Hazardous conditions'
+                },
+                danger: { 
+                    color: 'bg-red-500 pulse-danger', 
+                    icon: '🔴', 
+                    text: 'Danger',
+                    description: 'Extreme conditions'
+                }
+            };
+            return configs[status];
+        }
 
-  <script>
-    // -------------------------
-    // CONFIG
-    // -------------------------
-    // 1) Replace this with your n8n webhook URL (must be public / reachable by the browser)
-    // 2) The webhook should accept POST JSON like: { "City": "Mumbai" }
-    // 3) The webhook should respond with JSON containing:
-    //    { "Tsunami": 12, "Cyclone": 35, "Rise in Sea level": "low rise" }
-    //    (or a similar object). The UI will try to display keys it finds.
-    const WEBHOOK_URL = 'https://your-n8n.example.com/webhook/coastal-alert';
+        function renderAreas(areas = coastalAreas) {
+            const grid = document.getElementById('coastalGrid');
+            
+            if (areas.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <div class="text-white text-xl mb-4">📊 Loading Coastal Data...</div>
+                        <div class="text-blue-200 mb-6">Connecting to Google Sheets database</div>
+                        <div class="animate-spin text-4xl">🌊</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = areas.map(area => {
+                const config = getStatusConfig(area.status);
+                return `
+                    <div class="area-card ${config.color} rounded-lg p-4 text-white transform hover:scale-105 transition-transform cursor-pointer" data-status="${area.status}">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-2xl">${config.icon}</div>
+                            <div class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">${area.state}</div>
+                        </div>
+                        <h3 class="font-bold text-lg mb-1">${area.name}</h3>
+                        <div class="text-sm opacity-90">${config.text}</div>
+                        <div class="text-xs opacity-75 mt-1">${config.description}</div>
+                    </div>
+                `;
+            }).join('');
+        }
 
-    // -------------------------
-    // Helper + UI code
-    // -------------------------
-    const cityEl = document.getElementById('city');
-    const fetchBtn = document.getElementById('fetchBtn');
-    const resultEl = document.getElementById('result');
-    const autoBtn = document.getElementById('autoBtn');
+        function updateCounts() {
+            const counts = {
+                safe: coastalAreas.filter(a => a.status === 'safe').length,
+                caution: coastalAreas.filter(a => a.status === 'caution').length,
+                warning: coastalAreas.filter(a => a.status === 'warning').length,
+                danger: coastalAreas.filter(a => a.status === 'danger').length
+            };
 
-    let auto = false;
-    let autoInterval = null;
+            document.getElementById('safeCount').textContent = counts.safe;
+            document.getElementById('cautionCount').textContent = counts.caution;
+            document.getElementById('warningCount').textContent = counts.warning;
+            document.getElementById('dangerCount').textContent = counts.danger;
+        }
 
-    function renderStatus(score){
-      if (typeof score !== 'number') return `<span class="status ok">N/A</span>`;
-      if (score >= 70) return `<span class="status danger">High (${score})</span>`;
-      if (score >= 30) return `<span class="status warn">Medium (${score})</span>`;
-      return `<span class="status ok">Low (${score})</span>`;
-    }
+        function filterAreas(status) {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
 
-    function renderResult(data){
-      if (!data) return '<div class="muted">No result returned.</div>';
-      // If response is a string containing newline-separated fields, attempt to parse
-      if (typeof data === 'string'){
-        const lines = data.split('\n').map(s=>s.trim()).filter(Boolean);
-        const obj = {};
-        lines.forEach(l=>{
-          const parts = l.split(':');
-          if (parts.length>=2) obj[parts[0].trim()] = parts.slice(1).join(':').trim();
-        });
-        data = obj;
-      }
+            // Filter and render areas
+            const filteredAreas = status === 'all' ? coastalAreas : coastalAreas.filter(area => area.status === status);
+            renderAreas(filteredAreas);
+        }
 
-      // If json contains nested fields, try to find the most relevant object
-      if (Array.isArray(data) && data.length>0) data = data[0];
+        // Pre-configured Google Sheets connection (replace with your actual sheet ID)
+        const SHEET_ID = '1q94vsuRZsuIXyatG97JhYB9fymRIZ6yFd-SdTJP1yt8'; // Example sheet ID
+        const SHEET_NAME = 'Sheet1';
+        let isConnected = true;
 
-      const keys = Object.keys(data);
-      if (keys.length===0) return '<div class="muted">Empty result.</div>';
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.className = `mb-4 p-3 rounded-lg ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`;
+            statusDiv.textContent = message;
+            statusDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 3000);
+        }
 
-      let html = '';
-      keys.forEach(k=>{
-        const v = data[k];
-        // parse numeric values if possible
-        const n = (typeof v === 'string')?parseFloat(v.replace(/[^
-0-9.-]/g,'')):v;
-        html += `<div class="line"><div><strong>${k}</strong><div class="muted">${typeof v === 'object'?JSON.stringify(v):v}</div></div><div>${renderStatus(isNaN(n)?undefined:n)}</div></div>`;
-      });
-      return html;
-    }
+        async function refreshFromSheets() {
+            try {
+                showStatus('📥 Refreshing coastal area data...', 'info');
+                
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+                
+                const response = await fetch(csvUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data from Google Sheets');
+                }
+                
+                const csvText = await response.text();
+                const rows = csvText.split('\n').map(row => 
+                    row.split(',').map(cell => cell.replace(/"/g, '').trim())
+                ).filter(row => row.length >= 3 && row[0]);
 
-    async function fetchAlert(){
-      const city = cityEl.value.trim() || 'Mumbai';
-      if (!WEBHOOK_URL || WEBHOOK_URL.includes('your-n8n')){
-        resultEl.innerHTML = '<div class="muted">Please configure <code>WEBHOOK_URL</code> in the script before using.</div>';
-        return;
-      }
+                // Skip header row if it exists
+                const dataRows = rows[0][0].toLowerCase().includes('area') || rows[0][0].toLowerCase().includes('name') ? rows.slice(1) : rows;
+                
+                if (dataRows.length === 0) {
+                    throw new Error('No valid data found in the sheet');
+                }
 
-      resultEl.innerHTML = '<div class="muted">Fetching...</div>';
+                // Update coastal areas with sheet data
+                coastalAreas.length = 0; // Clear existing data
+                dataRows.forEach(row => {
+                    if (row[0] && row[1] && row[2]) {
+                        const status = row[2].toLowerCase();
+                        if (['safe', 'caution', 'warning', 'danger'].includes(status)) {
+                            coastalAreas.push({
+                                name: row[0],
+                                state: row[1],
+                                status: status
+                            });
+                        }
+                    }
+                });
 
-      try{
-        const resp = await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ City: city })
-        });
+                if (coastalAreas.length === 0) {
+                    throw new Error('No valid coastal area data found');
+                }
 
-        const text = await resp.text();
-        let data;
-        try{ data = JSON.parse(text); } catch(e){ data = text; }
+                renderAreas();
+                updateCounts();
+                updateLastUpdate();
+                showStatus(`✅ Data refreshed - ${coastalAreas.length} coastal areas loaded`, 'success');
 
-        resultEl.innerHTML = renderResult(data);
-      } catch(err){
-        resultEl.innerHTML = `<div class="muted">Request failed: ${err.message}</div>`;
-      }
-    }
+            } catch (error) {
+                showStatus(`❌ Error loading data: ${error.message}`, 'error');
+                console.error('Sheets loading error:', error);
+            }
+        }
 
-    fetchBtn.addEventListener('click', fetchAlert);
-    autoBtn.addEventListener('click', ()=>{
-      auto = !auto;
-      autoBtn.textContent = `Auto: ${auto? 'On' : 'Off'}`;
-      if (auto){
-        autoInterval = setInterval(fetchAlert, 60_000); // every 60s
-        fetchAlert();
-      } else {
-        clearInterval(autoInterval);
-      }
-    });
 
-    // Optional: load initial data
-    // fetchAlert();
-  </script>
-</body>
+
+        function updateLastUpdate() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString();
+        }
+
+        // Initialize the page and load data automatically
+        renderAreas();
+        updateCounts();
+        updateLastUpdate();
+        
+        // Automatically load data from sheets on page load
+        refreshFromSheets();
+        
+        // Auto-refresh every 5 minutes
+        setInterval(refreshFromSheets, 300000);
+
+        // Add CSS for active filter button
+        const style = document.createElement('style');
+        style.textContent = `
+            .filter-btn.active {
+                background-color: #1e40af !important;
+                box-shadow: 0 0 0 2px #60a5fa;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9779ffb3d383d91f',t:'MTc1NjYxNjc4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
