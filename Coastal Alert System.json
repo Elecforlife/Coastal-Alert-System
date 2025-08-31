@@ -32,7 +32,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{ $json.Latitudes }}2&longitude={{ $json.Longitudes }}&hourly=temperature_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,pressure_msl,surface_pressure,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m,wind_direction_10m,wind_direction_80m,wind_direction_120m,wind_direction_180m,wind_gusts_10m,temperature_80m,temperature_120m,temperature_180m,soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm,soil_moisture_27_to_81cm,cape,lifted_index,convective_inhibition,freezing_level_height,boundary_layer_height&minutely_15=precipitation&past_days=2",
+        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{ $json.Latitudes }}&longitude={{ $json.Longitudes }}&hourly=temperature_2m,precipitation,rain,showers,snowfall,snow_depth,precipitation_probability,cloud_cover,pressure_msl,surface_pressure,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m,wind_direction_10m,wind_direction_80m,wind_direction_120m,wind_direction_180m,wind_gusts_10m,temperature_80m,temperature_120m,temperature_180m,soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm,cape,lifted_index,convective_inhibition,freezing_level_height,boundary_layer_height&minutely_15=precipitation",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -138,7 +138,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2272,
+        2480,
         -112
       ],
       "id": "a6502e4a-61d5-4699-9b32-e1847497e6ac",
@@ -195,6 +195,206 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1q94vsuRZsuIXyatG97JhYB9fymRIZ6yFd-SdTJP1yt8",
+          "mode": "list",
+          "cachedResultName": "GIVE THE SAME ABOVE THING WITHOUT DEGREE SYMBOL A...",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1q94vsuRZsuIXyatG97JhYB9fymRIZ6yFd-SdTJP1yt8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 615863930,
+          "mode": "list",
+          "cachedResultName": "GIVE THE SAME ABOVE THING WITHOUT DEGREE SYMBOL A...",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1q94vsuRZsuIXyatG97JhYB9fymRIZ6yFd-SdTJP1yt8/edit#gid=615863930"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "Small report"
+          ],
+          "schema": [
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Place",
+              "displayName": "Place",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Latitude",
+              "displayName": "Latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Longitude",
+              "displayName": "Longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Small report",
+              "displayName": "Small report",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Long report",
+              "displayName": "Long report",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2240,
+        -112
+      ],
+      "id": "78ccdfa2-550a-4ae4-a393-42e67ab64cf9",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7kDxh9PZzqUCTurK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1q94vsuRZsuIXyatG97JhYB9fymRIZ6yFd-SdTJP1yt8",
+          "mode": "list",
+          "cachedResultName": "GIVE THE SAME ABOVE THING WITHOUT DEGREE SYMBOL A...",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1q94vsuRZsuIXyatG97JhYB9fymRIZ6yFd-SdTJP1yt8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 615863930,
+          "mode": "list",
+          "cachedResultName": "GIVE THE SAME ABOVE THING WITHOUT DEGREE SYMBOL A...",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1q94vsuRZsuIXyatG97JhYB9fymRIZ6yFd-SdTJP1yt8/edit#gid=615863930"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            "Long report"
+          ],
+          "schema": [
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Place",
+              "displayName": "Place",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Latitude",
+              "displayName": "Latitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Longitude",
+              "displayName": "Longitude",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Small report",
+              "displayName": "Small report",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Long report",
+              "displayName": "Long report",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2240,
+        128
+      ],
+      "id": "b5456d27-22de-41f5-93c6-7ba35204dbfc",
+      "name": "Append or update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7kDxh9PZzqUCTurK",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -241,7 +441,7 @@
       "main": [
         [
           {
-            "node": "Send a text message",
+            "node": "Append or update row in sheet",
             "type": "main",
             "index": 0
           }
@@ -269,13 +469,35 @@
           }
         ]
       ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "90e5944c-7074-4a8c-84d4-3f2ddd02f489",
+  "versionId": "d39ba984-fbe3-44de-ae35-699e98606e34",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e68818f3bbfc86da018f6e5ebe5a17db43a43bc0161af2dd1c9e48e68789a184"
