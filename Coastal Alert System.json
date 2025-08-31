@@ -2,25 +2,20 @@
   "name": "Coastal Alert System",
   "nodes": [
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        208,
-        0
-      ],
-      "id": "3102419f-c1fc-4011-b54e-b4953db31906",
-      "name": "When clicking ‘Execute workflow’"
-    },
-    {
       "parameters": {
         "assignments": {
           "assignments": [
             {
               "id": "e659acc8-5611-44c3-a911-a9d43706afd5",
-              "name": "City",
-              "value": "Mumbai",
-              "type": "string"
+              "name": "Latitudes",
+              "value": "={{ $json.Latitude }}",
+              "type": "number"
+            },
+            {
+              "id": "0c7b9f09-2fe3-4434-a1f5-2bad25b7f21c",
+              "name": "Longitudes",
+              "value": "={{ $json.Longitude }}",
+              "type": "number"
             }
           ]
         },
@@ -29,7 +24,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        416,
+        1248,
         0
       ],
       "id": "800963ea-0416-4697-8002-9ad91f320c79",
@@ -37,23 +32,30 @@
     },
     {
       "parameters": {
-        "cityName": "={{ $json.City }}",
-        "language": "en"
+        "url": "=https://api.open-meteo.com/v1/forecast?latitude={{ $json.Latitudes }}2&longitude={{ $json.Longitudes }}&hourly=temperature_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,pressure_msl,surface_pressure,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,wind_speed_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m,wind_direction_10m,wind_direction_80m,wind_direction_120m,wind_direction_180m,wind_gusts_10m,temperature_80m,temperature_120m,temperature_180m,soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm,soil_temperature_54cm,soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_moisture_3_to_9cm,soil_moisture_9_to_27cm,soil_moisture_27_to_81cm,cape,lifted_index,convective_inhibition,freezing_level_height,boundary_layer_height&minutely_15=precipitation&past_days=2",
+        "options": {}
       },
-      "type": "n8n-nodes-base.openWeatherMap",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        624,
+        1424,
         0
       ],
-      "id": "0254427b-3410-44c2-a091-a85d74f3580e",
-      "name": "OpenWeatherMap",
-      "credentials": {
-        "openWeatherMapApi": {
-          "id": "cRc0fC3Bj7Jjf33b",
-          "name": "OpenWeatherMap account"
-        }
-      }
+      "id": "c1ff0034-b931-4489-872f-9d61f8c5ff39",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = items[0].json;\nconst hourly = data.hourly;\n\n// 1) Build hourly records dynamically\nconst variables = Object.keys(hourly).filter(k => k !== \"time\");\nconst hourlyRecords = hourly.time.map((t, i) => {\n  const row = { time: t };\n  for (const v of variables) {\n    row[v] = hourly[v][i];\n  }\n  return row;\n});\n\n// 2) Daily aggregates (auto-mean for now)\nconst dailyMap = {};\nhourlyRecords.forEach(rec => {\n  const date = rec.time.split(\"T\")[0];\n  if (!dailyMap[date]) {\n    dailyMap[date] = { count: 0, sums: {}, maxes: {} };\n  }\n  dailyMap[date].count++;\n  for (const v of variables) {\n    if (typeof rec[v] === \"number\") {\n      dailyMap[date].sums[v] = (dailyMap[date].sums[v] || 0) + rec[v];\n      dailyMap[date].maxes[v] = Math.max(dailyMap[date].maxes[v] || -Infinity, rec[v]);\n    }\n  }\n});\n\n// 3) Convert to daily summary (mean for most, max for wind speeds/precip prob)\nconst dailySummary = Object.entries(dailyMap).map(([date, v]) => {\n  const obj = { date };\n  for (const variable of variables) {\n    if (variable.includes(\"precipitation\")) {\n      obj[variable] = v.sums[variable] || 0; // sum precip\n    } else if (variable.includes(\"wind\") || variable.includes(\"gust\")) {\n      obj[variable] = v.maxes[variable] || 0; // max wind/gust\n    } else {\n      obj[variable] = (v.sums[variable] || 0) / v.count; // mean\n    }\n  }\n  return obj;\n});\n\n// Return clarified data\nreturn [\n//  { json: { hourly_data: hourlyRecords } },\n  { json: { daily_summary: dailySummary } }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1632,
+        0
+      ],
+      "id": "853d9f7d-f625-414e-8b1f-e603b231987f",
+      "name": "Code"
     },
     {
       "parameters": {
@@ -66,7 +68,11 @@
         "messages": {
           "values": [
             {
-              "content": "=Put the parameter below in a single \"query\" field. Ensure it is a string.\n\nweather_description:{{ $json.weather[0].description }}\ntemp:{{ $json.main.temp }}\npressure:{{ $json.main.pressure }}\nhumidity:{{ $json.main.humidity }}\nsea_level:{{ $json.main.sea_level }}\ngrnd_level:{{ $json.main.grnd_level }}\nvisibility:{{ $json.visibility }}\nwind_speed:{{ $json.wind.speed }}\nwind_deg:{{ $json.wind.deg }}\nwind_gust:{{ $json.wind.gust }}\n"
+              "content": "You are a disaster risk prediction assistant. \nYou will be given weather and environmental data (temperature, soil temperature, soil moisture, CAPE, lifted index, freezing level, boundary layer height, etc.) for the past 7 days and the forecasted next 7 days.\nYour task is to analyze patterns and assess the risk of natural hazards such as:\n-Rise in water level\n-Algal blooms\n- Cyclone / severe storm\n- Flood\n- Heatwave\n- Drought\n- Landslide \nProvide your answer in JSON format with fields:\n{\n  \"cyclone_risk\": \"Low | Medium | High\",\n  \"flood_risk\": \"Low | Medium | High\",\n  \"heatwave_risk\": \"Low | Medium | High\",\n  \"drought_risk\": \"Low | Medium | High\",\n  \"landslide_risk\": \"Low | Medium | High\"\n}\nGive the data as given above format does not add anything or give less ",
+              "role": "model"
+            },
+            {
+              "content": "=Here is the clarified weather dataset for analysis:\n\nPAST 7 DAYS:\n{{ $json.daily_summary[0] }}\n{{ $json.daily_summary[1] }}\n{{ $json.daily_summary[2] }}\n{{ $json.daily_summary[3] }}\n{{ $json.daily_summary[4] }}\n{{ $json.daily_summary[5] }}\n{{ $json.daily_summary[6] }}\n\nFORECAST NEXT 7 DAYS:\n{{ $json.daily_summary[7] }}\n{{ $json.daily_summary[8] }}\n{{ $json.daily_summary[9] }}\n{{ $json.daily_summary[10] }}\n{{ $json.daily_summary[11] }}\n{{ $json.daily_summary[12] }}\n{{ $json.daily_summary[13] }}\n\nAnalyze this dataset and return disaster risk predictions as instructed.\n"
             }
           ]
         },
@@ -75,10 +81,10 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        816,
-        0
+        1888,
+        -112
       ],
-      "id": "3b767906-df43-41bc-9f72-f3cbe001fa21",
+      "id": "fb29f16e-16a1-4a77-9e21-97c380737cfe",
       "name": "Message a model",
       "credentials": {
         "googlePalmApi": {
@@ -98,11 +104,11 @@
         "messages": {
           "values": [
             {
-              "content": "Analyze this this data and predict if any tsunami, cyclone can hit it, reply only on the format given below and nothing:\nTsunami: probability (in number)\nCyclone: probability (in number)\nRise in Sea level: No rise, decline, low rise, risky",
+              "content": "You are a disaster risk prediction assistant. \nYou will be given weather and environmental data (temperature, soil temperature, soil moisture, CAPE, lifted index, freezing level, boundary layer height, etc.) for the past 7 days and the forecasted next 7 days. \nYour task is to analyze patterns and assess the risk of natural hazards such as:\n-Rise in water level\n-Algal blooms\n- Cyclone / severe storm\n- Flood\n- Heatwave\n- Drought\n- Landslide \nProvide a detailed report of these calamities if chances are high or low explaining in detail",
               "role": "model"
             },
             {
-              "content": "={{ $json.content.parts[0].text }}"
+              "content": "=Here is the clarified weather dataset for analysis:\n\nPAST 7 DAYS:\n{{ $json.daily_summary[0] }}\n{{ $json.daily_summary[1] }}\n{{ $json.daily_summary[2] }}\n{{ $json.daily_summary[3] }}\n{{ $json.daily_summary[4] }}\n{{ $json.daily_summary[5] }}\n{{ $json.daily_summary[6] }}\n\nFORECAST NEXT 7 DAYS:\n{{ $json.daily_summary[7] }}\n{{ $json.daily_summary[8] }}\n{{ $json.daily_summary[9] }}\n{{ $json.daily_summary[10] }}\n{{ $json.daily_summary[11] }}\n{{ $json.daily_summary[12] }}\n{{ $json.daily_summary[13] }}\n\nAnalyze this dataset and return disaster risk predictions as instructed."
             }
           ]
         },
@@ -111,10 +117,10 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1,
       "position": [
-        1184,
-        0
+        1888,
+        128
       ],
-      "id": "42dca951-c4d4-45c2-a789-c25a74383244",
+      "id": "751f3bbb-65dc-47a9-9bd5-f970de02b20f",
       "name": "Message a model1",
       "credentials": {
         "googlePalmApi": {
@@ -125,48 +131,106 @@
     },
     {
       "parameters": {
-        "operation": "sendChatAction"
+        "chatId": "8258768678",
+        "text": "={{ $json.content.parts[0].text }}",
+        "additionalFields": {}
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1536,
+        2272,
+        -112
+      ],
+      "id": "a6502e4a-61d5-4699-9b32-e1847497e6ac",
+      "name": "Send a text message",
+      "webhookId": "7f04adb2-d80c-44c5-b2a0-3fc1c6b8baf1",
+      "credentials": {
+        "telegramApi": {
+          "id": "5H6in1p2FsDpgElv",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        800,
         0
       ],
-      "id": "d98b10aa-f594-472f-8000-073bc19af6ba",
-      "name": "Send a chat action",
-      "webhookId": "858e1672-ddcd-4718-a311-019b16b0be3f"
+      "id": "4c407a1f-1587-4783-85b7-aa29d59c5108",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1gpuPCdu1mGKVDFHYBr4ojLxJSvPbBvaK8WJWVgLSXFE",
+          "mode": "list",
+          "cachedResultName": "Coastal ALert System",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gpuPCdu1mGKVDFHYBr4ojLxJSvPbBvaK8WJWVgLSXFE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gpuPCdu1mGKVDFHYBr4ojLxJSvPbBvaK8WJWVgLSXFE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "9c1cfb73-2109-4955-bcb7-fcc55f0db192",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "7kDxh9PZzqUCTurK",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "When clicking ‘Execute workflow’": {
-      "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Edit Fields": {
       "main": [
         [
           {
-            "node": "OpenWeatherMap",
+            "node": "HTTP Request",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "OpenWeatherMap": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
       "main": [
         [
           {
             "node": "Message a model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Message a model1",
             "type": "main",
             "index": 0
           }
@@ -177,18 +241,29 @@
       "main": [
         [
           {
-            "node": "Message a model1",
+            "node": "Send a text message",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Message a model1": {
+    "When clicking ‘Execute workflow’": {
       "main": [
         [
           {
-            "node": "Send a chat action",
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
@@ -200,7 +275,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5dc072bb-d6f9-485b-a419-33969d63042e",
+  "versionId": "90e5944c-7074-4a8c-84d4-3f2ddd02f489",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e68818f3bbfc86da018f6e5ebe5a17db43a43bc0161af2dd1c9e48e68789a184"
