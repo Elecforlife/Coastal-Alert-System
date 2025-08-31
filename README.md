@@ -1,68 +1,83 @@
-# Coastal-Alert-System
-It is an AI driven Coastal Alert System 
+# Natural Calamity Prediction System
 
-# 🌊 Coastal Alert System – n8n Workflow
-
-This project is an **AI-powered coastal weather and disaster alert system** built using **n8n**.  
-It collects **real-time weather data** from OpenWeatherMap, analyzes it with **Google Gemini (PaLM) LLM**, and sends predictions/alerts about **tsunamis, cyclones, and sea level rise** to users via **Telegram** and the connected website.
+A **real-time web dashboard** that visualizes **natural calamity predictions** (floods, earthquakes, wildfires) on an **interactive map**, fetches data from **Supabase**, and displays detailed prediction panels and charts. The system leverages **n8n workflows**, **AI agents**, and **Supabase Edge Functions** to automate prediction data processing and storage.
 
 ---
 
-## ⚡ Features
-- 🌦️ Fetches real-time weather data (temperature, humidity, wind, pressure, sea level, etc.)
-- 🤖 Uses **Google Gemini LLM** for analyzing weather patterns
-- 🌊 Predicts **Tsunami, Cyclone probability, and Sea Level rise risks**
-- 📩 Sends automated alerts to **Telegram** (and can be extended to websites or dashboards)
-- 🛠️ Easily configurable city/region for monitoring
+## 🌟 Features
+
+- **Interactive Map**
+  - Shows disaster locations with **severity-based color markers**:
+    - Green = Low  
+    - Yellow = Medium  
+    - Red = High
+  - Zoom, pan, and click markers for detailed information.
+
+- **Prediction Panel / Sidebar**
+  - Displays type of calamity, severity, location, confidence percentage, and timestamp.
+  - Expandable and sortable table for easy monitoring.
+
+- **Charts & Data Visualization**
+  - Bar/pie charts showing disaster type frequency and severity distribution.
+  - Real-time updates from Supabase database.
+
+- **Real-Time Updates**
+  - Workflow runs every **minute** (using n8n) to fetch data from external APIs.
+  - AI agent processes data and sends predictions to Supabase Edge Function.
+
+- **Dark Mode**
+  - Default dark theme with optional toggle for light mode.
+
+- **Notifications**
+  - Popups for high-severity events to alert users instantly.
 
 ---
 
-## 🗂 Workflow Overview
-The workflow consists of the following nodes:
+## 🏗 System Architecture
 
-1. **Manual Trigger** – Starts the workflow manually (can be scheduled via Cron).
-2. **Edit Fields (City Input)** – Defines the city (default: *Mumbai*).
-3. **OpenWeatherMap Node** – Fetches live weather data.
-4. **Message a Model (Gemini)** – Structures the weather data into a query for analysis.
-5. **Message a Model1 (Gemini)** – Predicts probabilities for:
-   - Tsunami
-   - Cyclone
-   - Sea level rise risk
-6. **Telegram Node** – Sends the analysis results to users via Telegram.
+The system follows this workflow:
 
----
+1. **Scheduled Trigger (n8n)**  
+   - Runs every minute to fetch data from weather, seismic, or disaster APIs.
 
-## 🔧 Setup Instructions
+2. **AI Agent Node (n8n)**  
+   - Processes incoming data.
+   - Generates predictions for type, severity, location, and confidence.
 
-### 1. Prerequisites
-- **n8n** installed and running ([Docs](https://docs.n8n.io))
-- OpenWeatherMap API Key
-- Google Gemini (PaLM API) credentials
-- Telegram Bot API Token
+3. **HTTP Request Node**  
+   - Sends processed prediction data to **Supabase Edge Function**.
 
-### 2. Import the Workflow
-1. Open your n8n instance.
-2. Import the file: [`Coastal Alert System.json`](./Coastal%20Alert%20System.json).
-3. Activate the workflow.
+4. **Supabase Edge Function**  
+   - Receives data and stores it in Supabase PostgreSQL tables.
+   - Optional: triggers alerts for high-severity predictions.
 
-### 3. Configure Credentials
-- **OpenWeatherMap API**
-  - Create an API key from [OpenWeatherMap](https://home.openweathermap.org/).
-  - Add it in n8n under *Credentials → OpenWeatherMap*.
-- **Google Gemini (PaLM)**
-  - Obtain API credentials.
-  - Add under *Credentials → Google Gemini (PaLM)*.
-- **Telegram**
-  - Create a bot via [BotFather](https://t.me/botfather).
-  - Add the bot token in *Credentials → Telegram API*.
+5. **Frontend Dashboard**  
+   - Fetches data from Supabase and displays on **interactive map, prediction panels, and charts**.
 
-### 4. Connect to Website (Optional)
-- Expose an **n8n Webhook** or **API endpoint** that your website can call.
-- Display predictions and alerts in your website’s UI.
-- Use a **Webhook Trigger** node instead of Manual Trigger for automation.
+**Diagram:**
+![Final ](https://github.com/user-attachments/assets/b60e2652-e306-4177-add2-1934c630c38b)
+
 
 ---
 
-## 📊 Example Output
-The AI model will return results in the following format:
+## 🛠 Technology Stack
+
+- **Frontend:** React.js, Tailwind CSS, Next.js (optional)  
+- **Map:** Leaflet.js / Mapbox GL JS  
+- **Charts:** Chart.js / ApexCharts  
+- **Backend / Database:** Supabase (PostgreSQL + Edge Functions)  
+- **Automation:** n8n workflow for scheduled data processing  
+- **AI / Prediction:** LLM (Gemini or chosen model) for analyzing data
+
+---
+
+## 🚀 Installation & Setup
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/your-username/natural-calamity-prediction.git
+cd natural-calamity-prediction
+
+npm install
+
 
