@@ -71,13 +71,3 @@ The system follows this workflow:
 
 ---
 
-## 🚀 Installation & Setup
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/your-username/natural-calamity-prediction.git
-cd natural-calamity-prediction
-
-npm install
-
-
